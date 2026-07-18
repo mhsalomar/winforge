@@ -1,0 +1,12 @@
+name: Tweak request
+description: Propose a documented and reversible Windows setting
+body:
+  - type: input
+    attributes: { label: Setting and supported builds }
+    validations: { required: true }
+  - type: textarea
+    attributes: { label: Primary evidence and exact side effects }
+    validations: { required: true }
+  - type: textarea
+    attributes: { label: Detect, verify, and rollback behavior }
+    validations: { required: true }

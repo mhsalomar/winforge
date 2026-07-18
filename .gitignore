@@ -1,0 +1,13 @@
+bin/
+obj/
+.vs/
+.idea/
+artifacts/
+TestResults/
+*.user
+*.suo
+*.pfx
+*.snk
+*.cer
+*.log
+local.settings.json

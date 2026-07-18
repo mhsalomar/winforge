@@ -1,0 +1,9 @@
+name: Compatibility report
+description: Report hardware, edition, or build compatibility
+body:
+  - type: input
+    attributes: { label: Windows edition/build and architecture }
+    validations: { required: true }
+  - type: textarea
+    attributes: { label: Hardware and observed result }
+    validations: { required: true }

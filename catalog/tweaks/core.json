@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "tweaks": [
+    {
+      "id": "privacy.advertising-id", "version": 1,
+      "titleKey": "Tweak_AdvertisingId_Title", "descriptionKey": "Tweak_AdvertisingId_Description", "detailedExplanationKey": "Tweak_AdvertisingId_Detail",
+      "category": "Privacy", "tags": ["privacy", "recommended"], "riskLevel": "low", "recommendation": "recommended",
+      "requiresAdmin": false, "requiresRestart": false, "requiresExplorerRestart": false, "destructive": false, "reversible": true,
+      "supportedOperatingSystems": { "minimum": "10.0.19045" }, "supportedEditions": [], "desktopOnly": false, "laptopAllowed": true,
+      "dependencies": [], "conflicts": [], "detectOperations": [],
+      "applyOperations": [{ "$type": "registry", "id": "privacy.advertising-id.set", "kind": "registrySetValue", "requiresAdmin": false, "hive": "HKCU", "keyPath": "Software\\Microsoft\\Windows\\CurrentVersion\\AdvertisingInfo", "valueName": "Enabled", "value": 0, "valueKind": "DWord" }],
+      "rollbackOperations": [], "verificationOperations": [], "expectedImpact": "Disables the per-user advertising identifier; no FPS claim.",
+      "possibleSideEffects": ["Apps may show less personalized advertising."], "evidenceReferences": ["https://support.microsoft.com/windows/windows-privacy-settings"], "lastReviewedDate": "2026-07-18"
+    },
+    {
+      "id": "privacy.tailored-experiences", "version": 1,
+      "titleKey": "Tweak_Tailored_Title", "descriptionKey": "Tweak_Tailored_Description", "detailedExplanationKey": "Tweak_Tailored_Detail",
+      "category": "Privacy", "tags": ["privacy", "recommended"], "riskLevel": "low", "recommendation": "recommended",
+      "requiresAdmin": false, "requiresRestart": false, "requiresExplorerRestart": false, "destructive": false, "reversible": true,
+      "supportedOperatingSystems": { "minimum": "10.0.19045" }, "supportedEditions": [], "desktopOnly": false, "laptopAllowed": true,
+      "dependencies": [], "conflicts": [], "detectOperations": [],
+      "applyOperations": [{ "$type": "registry", "id": "privacy.tailored.set", "kind": "registrySetValue", "requiresAdmin": false, "hive": "HKCU", "keyPath": "Software\\Microsoft\\Windows\\CurrentVersion\\Privacy", "valueName": "TailoredExperiencesWithDiagnosticDataEnabled", "value": 0, "valueKind": "DWord" }],
+      "rollbackOperations": [], "verificationOperations": [], "expectedImpact": "Reduces tailored suggestions based on diagnostic data.",
+      "possibleSideEffects": ["Windows suggestions become less personalized."], "evidenceReferences": ["https://learn.microsoft.com/windows/privacy/manage-connections-from-windows-operating-system-components-to-microsoft-services"], "lastReviewedDate": "2026-07-18"
+    },
+    {
+      "id": "privacy.suggested-content", "version": 1,
+      "titleKey": "Tweak_Suggestions_Title", "descriptionKey": "Tweak_Suggestions_Description", "detailedExplanationKey": "Tweak_Suggestions_Detail",
+      "category": "Privacy", "tags": ["privacy", "ui"], "riskLevel": "low", "recommendation": "recommended",
+      "requiresAdmin": false, "requiresRestart": false, "requiresExplorerRestart": true, "destructive": false, "reversible": true,
+      "supportedOperatingSystems": { "minimum": "10.0.19045" }, "supportedEditions": [], "desktopOnly": false, "laptopAllowed": true,
+      "dependencies": [], "conflicts": [], "detectOperations": [],
+      "applyOperations": [
+        { "$type": "registry", "id": "privacy.suggestions.338388", "kind": "registrySetValue", "requiresAdmin": false, "hive": "HKCU", "keyPath": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager", "valueName": "SubscribedContent-338388Enabled", "value": 0, "valueKind": "DWord" },
+        { "$type": "registry", "id": "privacy.suggestions.softlanding", "kind": "registrySetValue", "requiresAdmin": false, "hive": "HKCU", "keyPath": "Software\\Microsoft\\Windows\\CurrentVersion\\ContentDeliveryManager", "valueName": "SoftLandingEnabled", "value": 0, "valueKind": "DWord" }
+      ],
+      "rollbackOperations": [], "verificationOperations": [], "expectedImpact": "Reduces Windows tips and suggested content.",
+      "possibleSideEffects": ["Windows onboarding tips are hidden."], "evidenceReferences": ["https://learn.microsoft.com/windows/configuration/windows-spotlight/"], "lastReviewedDate": "2026-07-18"
+    },
+    {
+      "id": "gaming.game-mode", "version": 1,
+      "titleKey": "Tweak_GameMode_Title", "descriptionKey": "Tweak_GameMode_Description", "detailedExplanationKey": "Tweak_GameMode_Detail",
+      "category": "Gaming", "tags": ["gaming", "recommended"], "riskLevel": "low", "recommendation": "recommended",
+      "requiresAdmin": false, "requiresRestart": false, "requiresExplorerRestart": false, "destructive": false, "reversible": true,
+      "supportedOperatingSystems": { "minimum": "10.0.19045" }, "supportedEditions": [], "desktopOnly": false, "laptopAllowed": true,
+      "dependencies": [], "conflicts": [], "detectOperations": [],
+      "applyOperations": [
+        { "$type": "registry", "id": "gaming.game-mode.allow", "kind": "registrySetValue", "requiresAdmin": false, "hive": "HKCU", "keyPath": "Software\\Microsoft\\GameBar", "valueName": "AllowAutoGameMode", "value": 1, "valueKind": "DWord" },
+        { "$type": "registry", "id": "gaming.game-mode.enable", "kind": "registrySetValue", "requiresAdmin": false, "hive": "HKCU", "keyPath": "Software\\Microsoft\\GameBar", "valueName": "AutoGameModeEnabled", "value": 1, "valueKind": "DWord" }
+      ],
+      "rollbackOperations": [], "verificationOperations": [], "expectedImpact": "Lets Windows prioritize gaming workloads; impact varies and must be measured.",
+      "possibleSideEffects": [], "evidenceReferences": ["https://support.xbox.com/help/games-apps/game-setup-and-play/use-game-mode-gaming-on-pc"], "lastReviewedDate": "2026-07-18"
+    },
+    {
+      "id": "gaming.background-captures", "version": 1,
+      "titleKey": "Tweak_Captures_Title", "descriptionKey": "Tweak_Captures_Description", "detailedExplanationKey": "Tweak_Captures_Detail",
+      "category": "Gaming", "tags": ["gaming", "recording"], "riskLevel": "low", "recommendation": "optional",
+      "requiresAdmin": false, "requiresRestart": false, "requiresExplorerRestart": false, "destructive": false, "reversible": true,
+      "supportedOperatingSystems": { "minimum": "10.0.19045" }, "supportedEditions": [], "desktopOnly": false, "laptopAllowed": true,
+      "dependencies": [], "conflicts": [], "detectOperations": [],
+      "applyOperations": [
+        { "$type": "registry", "id": "gaming.capture.app", "kind": "registrySetValue", "requiresAdmin": false, "hive": "HKCU", "keyPath": "Software\\Microsoft\\Windows\\CurrentVersion\\GameDVR", "valueName": "AppCaptureEnabled", "value": 0, "valueKind": "DWord" },
+        { "$type": "registry", "id": "gaming.capture.dvr", "kind": "registrySetValue", "requiresAdmin": false, "hive": "HKCU", "keyPath": "System\\GameConfigStore", "valueName": "GameDVR_Enabled", "value": 0, "valueKind": "DWord" }
+      ],
+      "rollbackOperations": [], "verificationOperations": [], "expectedImpact": "Avoids background capture work when recording is not needed.",
+      "possibleSideEffects": ["Background game clip recording stops."], "evidenceReferences": ["https://support.microsoft.com/windows/adjust-background-recording-settings-on-windows"], "lastReviewedDate": "2026-07-18"
+    },
+    {
+      "id": "privacy.delivery-optimization", "version": 1,
+      "titleKey": "Tweak_Delivery_Title", "descriptionKey": "Tweak_Delivery_Description", "detailedExplanationKey": "Tweak_Delivery_Detail",
+      "category": "Privacy", "tags": ["network", "update"], "riskLevel": "medium", "recommendation": "optional",
+      "requiresAdmin": true, "requiresRestart": false, "requiresExplorerRestart": false, "destructive": false, "reversible": true,
+      "supportedOperatingSystems": { "minimum": "10.0.19045" }, "supportedEditions": [], "desktopOnly": false, "laptopAllowed": true,
+      "dependencies": [], "conflicts": [], "detectOperations": [],
+      "applyOperations": [{ "$type": "registry", "id": "privacy.delivery.http", "kind": "registrySetValue", "requiresAdmin": true, "hive": "HKLM", "keyPath": "SOFTWARE\\Policies\\Microsoft\\Windows\\DeliveryOptimization", "valueName": "DODownloadMode", "value": 0, "valueKind": "DWord" }],
+      "rollbackOperations": [], "verificationOperations": [], "expectedImpact": "Uses HTTP sources only and disables Delivery Optimization peer uploads.",
+      "possibleSideEffects": ["Update downloads cannot use peers on the local network."], "evidenceReferences": ["https://learn.microsoft.com/windows/deployment/do/waas-delivery-optimization-reference"], "lastReviewedDate": "2026-07-18"
+    }
+  ],
+  "profiles": [
+    { "id": "safe-cleanup", "titleKey": "Profile_SafeCleanup", "tweakIds": [], "desktopOnly": false },
+    { "id": "recommended", "titleKey": "Profile_Recommended", "tweakIds": ["privacy.advertising-id", "privacy.tailored-experiences", "privacy.suggested-content"], "desktopOnly": false },
+    { "id": "gaming-balanced", "titleKey": "Profile_Gaming", "tweakIds": ["gaming.game-mode", "gaming.background-captures"], "desktopOnly": true },
+    { "id": "privacy", "titleKey": "Profile_Privacy", "tweakIds": ["privacy.advertising-id", "privacy.tailored-experiences", "privacy.suggested-content", "privacy.delivery-optimization"], "desktopOnly": false },
+    { "id": "minimal-desktop", "titleKey": "Profile_Minimal", "tweakIds": ["privacy.suggested-content"], "desktopOnly": true },
+    { "id": "custom", "titleKey": "Profile_Custom", "tweakIds": [], "desktopOnly": false }
+  ]
+}

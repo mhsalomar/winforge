@@ -1,0 +1,10 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="WinForge" Manufacturer="WinForge contributors" Version="1.0.0" UpgradeCode="7D813C21-2EC5-4D55-92BC-A6DC5BE30D17" Scope="perMachine">
+    <MajorUpgrade DowngradeErrorMessage="A newer version of WinForge is already installed." />
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="WinForge" />
+    </StandardDirectory>
+    <!-- Components are generated from the portable manifest by scripts/package-installer.ps1. -->
+  </Package>
+</Wix>

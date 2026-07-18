@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://winforge.local/schemas/catalog.schema.json",
+  "type": "object",
+  "required": ["schemaVersion", "tweaks", "profiles"],
+  "properties": {
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "tweaks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "version", "titleKey", "descriptionKey", "detailedExplanationKey", "category", "riskLevel", "recommendation", "reversible", "applyOperations", "expectedImpact", "lastReviewedDate"]
+      }
+    },
+    "profiles": {
+      "type": "array",
+      "items": { "type": "object", "required": ["id", "titleKey", "tweakIds"] }
+    }
+  },
+  "additionalProperties": false
+}
