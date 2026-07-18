@@ -4,6 +4,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Input;
+using System.Windows.Media;
 using WinForge.Core;
 using WinForge.Infrastructure;
 using WinForge.Localization;
@@ -231,7 +232,21 @@ public sealed class MainViewModel : ViewModelBase
     private bool FilterRow(object item) => string.IsNullOrWhiteSpace(SearchText) || item.ToString()?.Contains(SearchText, StringComparison.CurrentCultureIgnoreCase) == true;
     private void SetBusy(bool value) { _busy = value; Raise(nameof(BusyVisibility)); ((AsyncCommand)PrimaryActionCommand).RaiseCanExecuteChanged(); ((AsyncCommand)SecondaryActionCommand).RaiseCanExecuteChanged(); ((AsyncCommand)SupportBundleCommand).RaiseCanExecuteChanged(); }
     private void RaisePageProperties() { Raise(nameof(PageTitle)); Raise(nameof(PageDescription)); Raise(nameof(DashboardVisibility)); Raise(nameof(AboutVisibility)); Raise(nameof(TableVisibility)); Raise(nameof(PrimaryActionLabel)); Raise(nameof(SecondaryActionLabel)); Raise(nameof(SecondaryVisibility)); }
-    private void ToggleTheme() { _dark = !_dark; ApplicationThemeManager.Apply(_dark ? ApplicationTheme.Dark : ApplicationTheme.Light); }
+    private void ToggleTheme()
+    {
+        _dark = !_dark;
+        ApplicationThemeManager.Apply(_dark ? ApplicationTheme.Dark : ApplicationTheme.Light);
+        SetBrush("WindowBackground", _dark ? "#0B0F14" : "#F4F6F8");
+        SetBrush("SurfaceBrush", _dark ? "#121922" : "#FFFFFF");
+        SetBrush("SurfaceHoverBrush", _dark ? "#1A2430" : "#E6ECEF");
+        SetBrush("TextBrush", _dark ? "#F2F5F8" : "#17212B");
+        SetBrush("MutedTextBrush", _dark ? "#9BA8B7" : "#526273");
+    }
+
+    private static void SetBrush(string key, string color)
+    {
+        if (Application.Current.Resources[key] is SolidColorBrush brush && !brush.IsFrozen) brush.Color = (Color)ColorConverter.ConvertFromString(color);
+    }
     private void ToggleLanguage() { _localizer.SetCulture(_localizer.Culture.Name == "ar-SA" ? "en-US" : "ar-SA"); BuildNavigation(); Raise(nameof(FlowDirection)); RaisePageProperties(); Status = _localizer["Ready"]; }
 
     private void BuildNavigation()

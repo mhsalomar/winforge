@@ -24,3 +24,10 @@ WinForge تطبيق Windows محلي ومفتوح المصدر للفحص وال
 ملف التطوير: `src/WinForge.UI/bin/Debug/net8.0-windows/WinForge.UI.exe`.
 
 يحفظ الاسترجاع داخل `%ProgramData%\WinForge\Rollback\<SessionId>`. راجع [أمان التويكات](docs/tweak-safety.md) و[اختبار VM](docs/VM_TESTING.md).
+
+## القيود الحالية
+
+- صفحات Startup وServices وScheduled Tasks وAppx وOptional Features وNetwork وRepair تنفذ فحصًا حقيقيًا، لكن أزرار تعديل كل صف لم تُعرض بعد في واجهة 1.0. مسارات الكتابة المكتملة حاليًا هي Privacy وGaming وCleaner وحزم الدعم واسترجاع الجلسة.
+- إزالة Appx، واستيراد/تصدير Profiles، واسترجاع عملية منفردة، وإنشاء Restore Point، وA/B Benchmark ليست معروضة في 1.0.
+- لا يعرض التطبيق FPS أو 1% Low أو DPC/ISR أو GPU أرقامًا مصطنعة عند غياب مصدر موثوق.
+- تم Smoke Test لنسخة x64 فقط؛ نسخة arm64 بُنيت ولم تُشغّل على عتاد arm64.

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Json.Schema;
 using WinForge.Core;
 
 namespace WinForge.Infrastructure;
@@ -14,6 +15,13 @@ public sealed class CatalogRepository
         var fullPath = Path.GetFullPath(path);
         if (!File.Exists(fullPath)) throw new FileNotFoundException("Catalog file was not found.", fullPath);
         var bytes = await File.ReadAllBytesAsync(fullPath, cancellationToken).ConfigureAwait(false);
+        var schemaPath = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(fullPath)!, "..", "schemas", "catalog.schema.json"));
+        if (!File.Exists(schemaPath)) throw new FileNotFoundException("Catalog JSON Schema was not found.", schemaPath);
+        var schemaText = await File.ReadAllTextAsync(schemaPath, cancellationToken).ConfigureAwait(false);
+        using var instance = JsonDocument.Parse(bytes);
+        var schema = JsonSchema.FromText(schemaText, new BuildOptions { SchemaRegistry = new SchemaRegistry() });
+        var evaluation = schema.Evaluate(instance.RootElement, new EvaluationOptions { OutputFormat = OutputFormat.List });
+        if (!evaluation.IsValid) throw new InvalidDataException("Catalog JSON Schema validation failed.");
         var catalog = JsonSerializer.Deserialize<CatalogDocument>(bytes, JsonDefaults.Options) ?? throw new InvalidDataException("Catalog is empty or invalid.");
         var issues = _engine.Validate(catalog, localizationKeys);
         if (issues.Count > 0) throw new InvalidDataException(string.Join(Environment.NewLine, issues.Select(x => $"{x.Code}: {x.Message}")));

@@ -122,5 +122,5 @@ public sealed record ScheduledTaskEntry(string Path, string Name, string State, 
 public sealed record AppxEntry(string Name, string PackageFullName, string Publisher, string Version, bool Provisioned, string Classification);
 public sealed record OptionalFeatureEntry(string Name, string State, string Classification);
 public sealed record NetworkAdapterInfo(string Name, string Status, long LinkSpeed, string Dns, int? Mtu, bool DhcpEnabled);
-public sealed record WorkerRequest(string Nonce, int UiProcessId, ExecutionPlan Plan, bool Rollback = false, JournalSession? Session = null);
+public sealed record WorkerRequest(string Nonce, int UiProcessId, ExecutionPlan Plan, Guid? RollbackSessionId = null);
 public sealed record WorkerResponse(bool Success, string Message, JournalSession? Session = null);

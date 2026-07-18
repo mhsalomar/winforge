@@ -27,7 +27,7 @@ public sealed class WorkerClient
             using var pipe = new NamedPipeClientStream(".", pipeName, PipeDirection.InOut, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken); timeout.CancelAfter(TimeSpan.FromSeconds(60));
             await pipe.ConnectAsync(timeout.Token);
-            await JsonSerializer.SerializeAsync(pipe, new WorkerRequest(nonce, current.Id, plan, rollbackSession is not null, rollbackSession), JsonDefaults.Options, timeout.Token); await pipe.FlushAsync(timeout.Token);
+            await JsonSerializer.SerializeAsync(pipe, new WorkerRequest(nonce, current.Id, plan, rollbackSession?.SessionId), JsonDefaults.Options, timeout.Token); await pipe.FlushAsync(timeout.Token);
             return await JsonSerializer.DeserializeAsync<WorkerResponse>(pipe, JsonDefaults.Options, timeout.Token) ?? new(false, "Worker returned an empty response.");
         }
         catch (System.ComponentModel.Win32Exception ex) when (ex.NativeErrorCode == 1223) { return new(false, "Administrator approval was cancelled."); }

@@ -35,6 +35,17 @@ public sealed class ExecutionEngineTests
         Assert.True(journal.PlanWrittenBeforeSession);
     }
 
+    [Fact]
+    public async Task Failed_rollback_is_not_reported_as_completed()
+    {
+        var executor = new FakeExecutor(failOn: "op", failRollback: true);
+        var operation = new RegistryOperation("op", OperationKind.RegistrySetValue, false, "HKCU", @"Software\Test", "A", 1, "DWord");
+        var tweak = CatalogEngineTests.Tweak("batch") with { ApplyOperations = [operation] };
+        var plan = new ExecutionPlan(Guid.NewGuid(), DateTimeOffset.UtcNow, [new(tweak, [operation])], "00");
+        var result = await new ExecutionEngine(executor, new FakeJournal()).ExecuteAsync(plan);
+        Assert.False(result.RollbackCompleted);
+    }
+
     [Theory]
     [InlineData(false, null)]
     [InlineData(true, "Manual")]
@@ -62,12 +73,12 @@ public sealed class ExecutionEngineTests
         Assert.Equal("true", session.BeforeStates[0].Metadata?["enabled"]);
     }
 
-    private sealed class FakeExecutor(string? failOn = null, OperationBeforeState? before = null) : IOperationExecutor
+    private sealed class FakeExecutor(string? failOn = null, OperationBeforeState? before = null, bool failRollback = false) : IOperationExecutor
     {
         public List<string> RolledBack { get; } = [];
         public Task<OperationBeforeState> CaptureBeforeAsync(TypedOperation operation, CancellationToken cancellationToken = default) => Task.FromResult(before ?? new(operation.Id, false, null, null));
         public Task<OperationResult> ExecuteAsync(TypedOperation operation, CancellationToken cancellationToken = default) => Task.FromResult(new OperationResult(operation.Id, operation.Id != failOn, operation.Id != failOn, operation.Id == failOn ? 1 : 0, "fake", TimeSpan.Zero));
-        public Task<OperationResult> RollbackAsync(TypedOperation operation, OperationBeforeState beforeState, CancellationToken cancellationToken = default) { RolledBack.Add(operation.Id); return Task.FromResult(new OperationResult(operation.Id, true, true, 0, "restored", TimeSpan.Zero)); }
+        public Task<OperationResult> RollbackAsync(TypedOperation operation, OperationBeforeState beforeState, CancellationToken cancellationToken = default) { RolledBack.Add(operation.Id); return Task.FromResult(new OperationResult(operation.Id, !failRollback, !failRollback, failRollback ? 1 : 0, "restored", TimeSpan.Zero)); }
     }
 
     private sealed class FakeJournal : IJournalStore

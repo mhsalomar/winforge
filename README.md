@@ -43,6 +43,8 @@ WinForge works without a network connection and sends no telemetry. Optional upd
 
 ## Known limitations
 
-- Appx removal and provisioned-package removal are modeled but not exposed as automatic bulk actions; protected and unknown packages stay read-only.
-- Installer compilation requires Inno Setup on the release machine; portable packages do not require it.
+- Startup, Services, Scheduled Tasks, Appx, Optional Features, Network, and Repair pages currently provide real inspection and exact-operation infrastructure, but their per-row mutation controls are not exposed in the 1.0 UI. Privacy, Gaming, Cleaner, support bundles, and session rollback are the implemented write flows.
+- Appx/provisioned-package removal, profile import/export, single-operation rollback, restore-point creation, and benchmark A/B orchestration are not exposed in 1.0.
+- Live FPS, 1% lows, DPC/ISR, GPU utilization, default-service baselines, and SSD/NVMe mapping are shown only when a trustworthy data source exists; 1.0 does not fabricate them.
+- The x64 UI received an isolated startup smoke test. arm64 builds successfully but was not executed on arm64 hardware.
 - Code signing requires a user-supplied certificate in CI secrets or a local secure certificate store.

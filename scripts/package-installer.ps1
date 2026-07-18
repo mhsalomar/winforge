@@ -41,6 +41,13 @@ foreach ($file in Get-ChildItem -LiteralPath $publish -File -Recurse | Sort-Obje
   $fileNode = $document.CreateElement('File', $namespace); $fileNode.SetAttribute('Id', (Get-StableId 'F' $relative)); $fileNode.SetAttribute('Source', $file.FullName); $fileNode.SetAttribute('KeyPath', 'yes'); $component.AppendChild($fileNode) | Out-Null
   $reference = $document.CreateElement('ComponentRef', $namespace); $reference.SetAttribute('Id', $componentId); $feature.AppendChild($reference) | Out-Null
 }
+$programMenu = $document.CreateElement('StandardDirectory', $namespace); $programMenu.SetAttribute('Id', 'ProgramMenuFolder'); $package.AppendChild($programMenu) | Out-Null
+$menuDirectory = $document.CreateElement('Directory', $namespace); $menuDirectory.SetAttribute('Id', 'WinForgeProgramMenu'); $menuDirectory.SetAttribute('Name', 'WinForge'); $programMenu.AppendChild($menuDirectory) | Out-Null
+$shortcutComponent = $document.CreateElement('Component', $namespace); $shortcutComponent.SetAttribute('Id', 'WinForgeShortcutComponent'); $shortcutComponent.SetAttribute('Guid', '*'); $menuDirectory.AppendChild($shortcutComponent) | Out-Null
+$shortcut = $document.CreateElement('Shortcut', $namespace); $shortcut.SetAttribute('Id', 'WinForgeStartMenuShortcut'); $shortcut.SetAttribute('Name', 'WinForge'); $shortcut.SetAttribute('Target', '[INSTALLFOLDER]WinForge.UI.exe'); $shortcut.SetAttribute('WorkingDirectory', 'INSTALLFOLDER'); $shortcutComponent.AppendChild($shortcut) | Out-Null
+$removeFolder = $document.CreateElement('RemoveFolder', $namespace); $removeFolder.SetAttribute('Id', 'RemoveWinForgeProgramMenu'); $removeFolder.SetAttribute('On', 'uninstall'); $shortcutComponent.AppendChild($removeFolder) | Out-Null
+$registry = $document.CreateElement('RegistryValue', $namespace); $registry.SetAttribute('Root', 'HKCU'); $registry.SetAttribute('Key', 'Software\WinForge'); $registry.SetAttribute('Name', 'InstallerShortcut'); $registry.SetAttribute('Type', 'integer'); $registry.SetAttribute('Value', '1'); $registry.SetAttribute('KeyPath', 'yes'); $shortcutComponent.AppendChild($registry) | Out-Null
+$shortcutReference = $document.CreateElement('ComponentRef', $namespace); $shortcutReference.SetAttribute('Id', 'WinForgeShortcutComponent'); $feature.AppendChild($shortcutReference) | Out-Null
 $settings = [Xml.XmlWriterSettings]::new(); $settings.Indent = $true; $settings.Encoding = [Text.UTF8Encoding]::new($false)
 $writer = [Xml.XmlWriter]::Create($source, $settings); $document.Save($writer); $writer.Dispose()
 dotnet tool restore

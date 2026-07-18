@@ -31,11 +31,17 @@ internal static class WorkerProgram
             if (!PlanMatchesCatalog(request.Plan, allowedTweaks)) return await WriteAsync(pipe, new(false, "Execution plan does not match the validated catalog."), timeout.Token);
             var journal = new JournalStore();
             var engine = new ExecutionEngine(new WindowsOperationExecutor(new SafeProcessRunner()), journal);
-            var session = request.Rollback && request.Session is not null
-                ? await engine.RollbackAsync(request.Plan, request.Session, timeout.Token)
-                : await engine.ExecuteAsync(request.Plan, timeout.Token);
-            var success = session.Results.All(x => x.Success && x.Verified);
-            return await WriteAsync(pipe, new(success, success ? (request.Rollback ? "Rollback completed and verified." : "Execution completed and verified.") : "Operation failed verification.", session), timeout.Token);
+            var isRollback = request.RollbackSessionId is not null;
+            JournalSession session;
+            if (isRollback)
+            {
+                var stored = await journal.ReadSessionAsync(request.RollbackSessionId!.Value, timeout.Token);
+                if (stored is null || !SessionMatchesPlan(stored, request.Plan)) return await WriteAsync(pipe, new(false, "Stored rollback journal does not match the validated plan."), timeout.Token);
+                session = await engine.RollbackAsync(request.Plan, stored, timeout.Token);
+            }
+            else session = await engine.ExecuteAsync(request.Plan, timeout.Token);
+            var success = isRollback ? session.RollbackCompleted : session.Results.All(x => x.Success && x.Verified);
+            return await WriteAsync(pipe, new(success, success ? (isRollback ? "Rollback completed and verified." : "Execution completed and verified.") : "Operation failed verification.", session), timeout.Token);
         }
         catch (Exception ex) when (ex is IOException or JsonException or InvalidDataException or OperationCanceledException or UnauthorizedAccessException)
         {
@@ -53,6 +59,13 @@ internal static class WorkerProgram
             if (!string.Equals(expected, actual, StringComparison.Ordinal)) return false;
         }
         return true;
+    }
+
+    private static bool SessionMatchesPlan(JournalSession session, ExecutionPlan plan)
+    {
+        if (session.SessionId != plan.SessionId) return false;
+        var operationIds = plan.Items.SelectMany(x => x.Operations).Select(x => x.Id).ToArray();
+        return session.BeforeStates.Count == operationIds.Length && session.BeforeStates.Select(x => x.OperationId).SequenceEqual(operationIds, StringComparer.Ordinal);
     }
 
     private static bool ValidateClient(NamedPipeServerStream pipe, int expectedPid)

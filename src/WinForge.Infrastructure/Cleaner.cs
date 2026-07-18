@@ -2,7 +2,7 @@ using WinForge.Core;
 
 namespace WinForge.Infrastructure;
 
-public sealed record CleanerCategory(string Id, IReadOnlyList<string> Roots, bool SelectedByDefault, string Explanation, TimeSpan MinimumAge = default);
+public sealed record CleanerCategory(string Id, IReadOnlyList<string> Roots, bool SelectedByDefault, string Explanation, TimeSpan MinimumAge = default, IReadOnlyList<string>? FilePatterns = null);
 
 public sealed class SafeCleaner : ICleaner
 {
@@ -40,7 +40,7 @@ public sealed class SafeCleaner : ICleaner
         foreach (var root in category.Roots.Distinct(StringComparer.OrdinalIgnoreCase))
         {
             if (!Directory.Exists(root)) continue;
-            EnumerateSafe(root, root, id, DateTime.UtcNow - category.MinimumAge, items, errors, cancellationToken);
+            EnumerateSafe(root, root, id, DateTime.UtcNow - category.MinimumAge, category.FilePatterns, items, errors, cancellationToken);
         }
         return new(id, items.Count, items.Sum(x => x.Length), items, errors);
     }
@@ -61,7 +61,7 @@ public sealed class SafeCleaner : ICleaner
         return new(preview.Category, deleted, bytes, errors);
     }
 
-    private static void EnumerateSafe(string root, string current, string category, DateTime oldestAllowedWriteTime, List<CleanerItem> items, List<string> errors, CancellationToken cancellationToken)
+    private static void EnumerateSafe(string root, string current, string category, DateTime oldestAllowedWriteTime, IReadOnlyList<string>? patterns, List<CleanerItem> items, List<string> errors, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         try
@@ -71,9 +71,10 @@ public sealed class SafeCleaner : ICleaner
             foreach (var file in info.EnumerateFiles())
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                if ((file.Attributes & FileAttributes.ReparsePoint) == 0 && file.LastWriteTimeUtc <= oldestAllowedWriteTime) items.Add(new(file.FullName, file.Length, category));
+                var patternMatch = patterns is null || patterns.Count == 0 || patterns.Any(pattern => System.IO.Enumeration.FileSystemName.MatchesSimpleExpression(pattern, file.Name, true));
+                if ((file.Attributes & FileAttributes.ReparsePoint) == 0 && file.LastWriteTimeUtc <= oldestAllowedWriteTime && patternMatch) items.Add(new(file.FullName, file.Length, category));
             }
-            foreach (var directory in info.EnumerateDirectories()) EnumerateSafe(root, directory.FullName, category, oldestAllowedWriteTime, items, errors, cancellationToken);
+            foreach (var directory in info.EnumerateDirectories()) EnumerateSafe(root, directory.FullName, category, oldestAllowedWriteTime, patterns, items, errors, cancellationToken);
         }
         catch (UnauthorizedAccessException ex) { errors.Add(ex.Message); }
         catch (IOException ex) { errors.Add(ex.Message); }
@@ -113,7 +114,7 @@ public sealed class SafeCleaner : ICleaner
             new("windows-temp", [Path.Combine(windows, "Temp")], false, "System temporary files older than 48 hours; administrator access may be required.", TimeSpan.FromHours(48)),
             new("wer", [Path.Combine(local, "Microsoft", "Windows", "WER")], true, "Windows Error Reporting archives and queues older than 24 hours.", TimeSpan.FromHours(24)),
             new("directx-shader", [Path.Combine(local, "D3DSCache")], false, "DirectX shader cache; rebuilt as needed."),
-            new("thumbnails", [Path.Combine(local, "Microsoft", "Windows", "Explorer")], false, "Thumbnail cache; rebuilt by Explorer."),
+            new("thumbnails", [Path.Combine(local, "Microsoft", "Windows", "Explorer")], false, "Thumbnail cache databases only; rebuilt by Explorer.", default, ["thumbcache*.db"]),
             new("nvidia-shader", [Path.Combine(local, "NVIDIA", "DXCache"), Path.Combine(local, "NVIDIA", "GLCache")], false, "NVIDIA shader caches."),
             new("amd-shader", [Path.Combine(local, "AMD", "DxCache"), Path.Combine(local, "AMD", "GLCache")], false, "AMD shader caches."),
             new("steam-web", [Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Steam", "config", "htmlcache")], false, "Steam web UI cache only."),

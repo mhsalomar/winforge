@@ -22,6 +22,18 @@ public sealed class InfrastructureSafetyTests : IDisposable
     }
 
     [Fact]
+    public async Task Catalog_schema_rejects_missing_required_properties()
+    {
+        var catalogDirectory = Path.Combine(_root, "catalog", "tweaks");
+        var schemaDirectory = Path.Combine(_root, "catalog", "schemas");
+        Directory.CreateDirectory(catalogDirectory); Directory.CreateDirectory(schemaDirectory);
+        File.Copy(Path.Combine(FindSolutionRoot(), "catalog", "schemas", "catalog.schema.json"), Path.Combine(schemaDirectory, "catalog.schema.json"));
+        var path = Path.Combine(catalogDirectory, "invalid.json");
+        await File.WriteAllTextAsync(path, "{\"schemaVersion\":1,\"tweaks\":[{}],\"profiles\":[]}");
+        await Assert.ThrowsAsync<InvalidDataException>(() => new CatalogRepository().LoadAsync(path));
+    }
+
+    [Fact]
     public async Task Cleaner_preview_and_clean_are_confined_to_allowlisted_fixture()
     {
         var allowed = Path.Combine(_root, "allowed"); Directory.CreateDirectory(allowed);
@@ -40,6 +52,17 @@ public sealed class InfrastructureSafetyTests : IDisposable
         var allowed = Path.Combine(_root, "allowed"); var outside = Path.Combine(_root, "outside.tmp"); Directory.CreateDirectory(allowed); File.WriteAllText(outside, "fixture");
         var cleaner = new SafeCleaner([new("fixture", [allowed], true, "test fixture")]);
         Assert.False(cleaner.IsPathAllowed("fixture", Path.Combine(allowed, "..", "outside.tmp")));
+    }
+
+    [Fact]
+    public async Task Cleaner_file_patterns_exclude_unrelated_cache_files()
+    {
+        var allowed = Path.Combine(_root, "explorer"); Directory.CreateDirectory(allowed);
+        await File.WriteAllTextAsync(Path.Combine(allowed, "thumbcache_256.db"), "thumbnail");
+        await File.WriteAllTextAsync(Path.Combine(allowed, "iconcache_256.db"), "icon");
+        var cleaner = new SafeCleaner([new("thumbnails", [allowed], false, "fixture", default, ["thumbcache*.db"])]);
+        var preview = Assert.Single(await cleaner.PreviewAsync(["thumbnails"]));
+        Assert.Single(preview.Items); Assert.Contains("thumbcache", preview.Items[0].Path);
     }
 
     [Fact]
@@ -96,12 +119,40 @@ public sealed class InfrastructureSafetyTests : IDisposable
         Assert.NotNull(copy); Assert.False(copy.BeforeStates[0].Existed); Assert.False(File.Exists(Path.Combine(store.RootPath, id.ToString("D"), "session.json.tmp")));
     }
 
+    [Theory]
+    [InlineData("DWord", "42", typeof(int))]
+    [InlineData("QWord", "922337203685477", typeof(long))]
+    [InlineData("String", "\"value\"", typeof(string))]
+    public void Journal_registry_values_restore_their_runtime_type(string valueType, string json, Type expectedType)
+    {
+        using var document = JsonDocument.Parse(json);
+        var restored = WindowsOperationExecutor.NormalizeStoredValue(document.RootElement.Clone(), valueType);
+        Assert.IsType(expectedType, restored);
+    }
+
+    [Fact]
+    public void Journal_binary_registry_value_restores_byte_array()
+    {
+        using var document = JsonDocument.Parse("\"AQID\"");
+        Assert.Equal([1, 2, 3], Assert.IsType<byte[]>(WindowsOperationExecutor.NormalizeStoredValue(document.RootElement.Clone(), "Binary")));
+    }
+
     [Fact]
     public async Task Invalid_service_identifier_fails_without_starting_a_process()
     {
         var executor = new WindowsOperationExecutor(new SafeProcessRunner());
         var result = await executor.ExecuteAsync(new ServiceOperation("bad", OperationKind.ServiceStop, true, "Bad & Dangerous"));
         Assert.False(result.Success); Assert.Contains("Invalid service", result.Message);
+    }
+
+    [Theory]
+    [InlineData(OperationKind.ServiceStop, null)]
+    [InlineData(OperationKind.ServiceSetStartupType, "disabled")]
+    public async Task Protected_service_stop_or_disable_is_blocked_before_process_start(OperationKind kind, string? startupType)
+    {
+        var executor = new WindowsOperationExecutor(new SafeProcessRunner());
+        var result = await executor.ExecuteAsync(new ServiceOperation("protected", kind, true, "WinDefend", startupType));
+        Assert.False(result.Success); Assert.Contains("Protected service", result.Message);
     }
 
     public void Dispose() { try { Directory.Delete(_root, true); } catch (IOException) { } }

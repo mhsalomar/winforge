@@ -20,8 +20,8 @@ public sealed class ExecutionEngine(IOperationExecutor executor, IJournalStore j
             await journal.WriteSessionAsync(session with { BeforeStates = states.ToArray(), Results = results.ToArray() }, cancellationToken).ConfigureAwait(false);
             if (!result.Success || !result.Verified)
             {
-                await RollbackCompletedOperationsAsync(plan, states, results, cancellationToken).ConfigureAwait(false);
-                return session with { BeforeStates = states.ToArray(), Results = results.ToArray(), RollbackCompleted = true };
+                var rollbackCompleted = await RollbackCompletedOperationsAsync(plan, states, results, cancellationToken).ConfigureAwait(false);
+                return session with { BeforeStates = states.ToArray(), Results = results.ToArray(), RollbackCompleted = rollbackCompleted };
             }
         }
 
@@ -40,10 +40,16 @@ public sealed class ExecutionEngine(IOperationExecutor executor, IJournalStore j
         return updated;
     }
 
-    private async Task RollbackCompletedOperationsAsync(ExecutionPlan plan, IReadOnlyList<OperationBeforeState> states, List<OperationResult> results, CancellationToken cancellationToken)
+    private async Task<bool> RollbackCompletedOperationsAsync(ExecutionPlan plan, IReadOnlyList<OperationBeforeState> states, List<OperationResult> results, CancellationToken cancellationToken)
     {
         var operations = plan.Items.SelectMany(x => x.Operations).Take(states.Count).ToArray();
+        var completed = true;
         for (var index = operations.Length - 1; index >= 0; index--)
-            results.Add(await executor.RollbackAsync(operations[index], states[index], cancellationToken).ConfigureAwait(false));
+        {
+            var result = await executor.RollbackAsync(operations[index], states[index], cancellationToken).ConfigureAwait(false);
+            results.Add(result);
+            completed &= result.Success && result.Verified;
+        }
+        return completed;
     }
 }
